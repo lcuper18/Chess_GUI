@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablero de Ajedrez con Stockfish</title>
+    <link rel="stylesheet" href="style.css"> 
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Ajedrez con Stockfish</h1>
+            <p class="subtitle">Juega contra el motor de ajedrez más poderoso del mundo</p>
+        </header>
+
+        <div class="game-area">
+            <div class="board-section">
+                <div class="board-container">
+                    <div class="chessboard" id="chessboard">
+                        </div>
+                </div>
+            </div>
+
+            <div class="controls-section">
+                <div class="panel">
+                    <h2>Controles del Juego</h2>
+                    <div class="server-status" id="serverStatus">
+                        Comprobando conexión con el servidor...
+                    </div>
+                    <div class="controls">
+                        <button id="getMoveBtn">
+                            <span>🤖</span> Mejor Jugada
+                        </button>
+                        <button id="resetBtn" class="secondary">
+                            <span>🔄</span> Reiniciar
+                        </button>
+                        <button id="flipBoardBtn">
+                            <span>↔️</span> Voltear Tablero
+                        </button>
+                        <button id="undoBtn">
+                            <span>↶</span> Deshacer
+                        </button>
+                    </div>
+                    <div class="status" id="status">Turno de las Blancas</div>
+                    <div class="debug-info" id="debugInfo">
+                        </div>
+                </div>
+
+                <div class="panel">
+                    <h2>Información de la Partida</h2>
+                    <div class="fen-display">
+                        <div class="fen-label">Posición FEN:</div>
+                        <div class="fen-value" id="fen">rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1</div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h2>Historial de Movimientos</h2>
+                    <div class="move-history">
+                        <div class="moves" id="moveHistory">
+                            </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

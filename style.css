@@ -1,0 +1,382 @@
+/* Importar una fuente estilo cartoon de Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Fredoka', sans-serif; /* Fuente más divertida */
+    background: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 100%); /* Colores más cálidos y vibrantes */
+    color: #333; /* Texto más oscuro para contrastar con el fondo claro */
+    min-height: 100vh;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* Centrar verticalmente */
+}
+
+.container {
+    max-width: 950px; /* Un poco más ancho */
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px; /* Más espacio entre secciones */
+    background-color: rgba(255, 255, 255, 0.95); /* Fondo blanco semitransparente para la carta principal */
+    border-radius: 20px; /* Bordes muy redondeados */
+    padding: 30px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2); /* Sombra más pronunciada */
+}
+
+header {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+h1 {
+    font-size: 3.2rem; /* Más grande */
+    margin-bottom: 10px;
+    color: #D32F2F; /* Rojo vibrante */
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.2); /* Sombra más suave */
+    letter-spacing: 1px;
+}
+
+.subtitle {
+    font-size: 1.4rem; /* Más grande */
+    opacity: 0.85;
+    color: #616161; /* Gris oscuro */
+}
+
+.game-area {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 40px; /* Más espacio entre el tablero y los controles */
+    width: 100%;
+}
+
+.board-section {
+    flex: 1;
+    min-width: 380px; /* Ajustado */
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.board-container {
+    width: 100%;
+    max-width: 500px;
+    background: #4CAF50; /* Verde brillante */
+    padding: 15px; /* Menos padding */
+    border-radius: 15px; /* Bordes redondeados */
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3); /* Sombra para profundidad */
+    border: 4px solid #388E3C; /* Borde más grueso y oscuro */
+}
+
+.chessboard {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border: 2px solid #5D4037; /* Borde del tablero más distintivo */
+    border-radius: 8px; /* Bordes redondeados para el tablero */
+    overflow: hidden;
+}
+
+.square {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3rem; /* Piezas más grandes */
+    cursor: pointer;
+    transition: background-color 0.2s ease-out, transform 0.1s; /* Transiciones suaves */
+    user-select: none;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1); /* Sombra sutil para las piezas */
+}
+
+.square:hover {
+    transform: scale(1.03); /* Efecto ligero de "pop" */
+}
+
+.square.light {
+    background-color: #FFF9C4; /* Amarillo pastel claro */
+}
+
+.square.dark {
+    background-color: #FFECB3; /* Amarillo pastel oscuro */
+}
+
+.square.selected {
+    background-color: #81C784 !important; /* Verde pastel cuando está seleccionada */
+    box-shadow: inset 0 0 0 3px #388E3C; /* Borde interior al seleccionar */
+}
+
+.square.possible-move {
+    position: relative;
+}
+
+.square.possible-move::after {
+    content: "";
+    position: absolute;
+    width: 30%; /* Círculo más grande */
+    height: 30%;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.4); /* Círculo de movimiento más visible */
+}
+
+/* Colores de piezas para un estilo cartoon (opcional, si los símbolos lo permiten o si usas imágenes) */
+.square[data-piece^="w"] { color: #5D4037; } /* Piezas blancas más marrones */
+.square[data-piece^="b"] { color: #212121; } /* Piezas negras más oscuras */
+
+
+.controls-section {
+    flex: 1;
+    min-width: 300px;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 25px; /* Más espacio */
+}
+
+.panel {
+    background: rgba(255, 255, 255, 0.9); /* Más opaco */
+    backdrop-filter: blur(8px); /* Blur sutil */
+    border-radius: 15px; /* Bordes redondeados */
+    padding: 25px; /* Más padding */
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(0, 0, 0, 0.05); /* Borde suave */
+}
+
+.panel h2 {
+    margin-bottom: 18px; /* Más espacio */
+    font-size: 1.8rem; /* Más grande */
+    color: #424242; /* Color de título */
+    border-bottom: 2px solid rgba(0, 0, 0, 0.1); /* Borde más suave */
+    padding-bottom: 10px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px; /* Más espacio entre botones */
+    margin-bottom: 20px;
+}
+
+button {
+    padding: 14px 22px; /* Más padding */
+    background: #64B5F6; /* Azul más claro y vivo */
+    color: white;
+    border: none;
+    border-radius: 10px; /* Más redondeado */
+    cursor: pointer;
+    font-size: 1.1rem; /* Más grande */
+    font-weight: 600;
+    transition: all 0.3s ease-in-out;
+    flex: 1;
+    min-width: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px; /* Más espacio para el icono */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Sombra para botones */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+button span {
+    font-size: 1.3rem; /* Iconos más grandes */
+}
+
+button:hover {
+    background: #42A5F5; /* Azul un poco más oscuro al pasar el ratón */
+    transform: translateY(-3px) scale(1.02); /* Efecto de "pop" más pronunciado */
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+}
+
+button:active {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+button:disabled {
+    background: #BDBDBD; /* Gris claro */
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+button.secondary {
+    background: #FF8A65; /* Naranja pastel */
+}
+
+button.secondary:hover {
+    background: #FF7043; /* Naranja más oscuro */
+}
+
+button.success {
+    background: #81C784; /* Verde pastel */
+}
+
+button.success:hover {
+    background: #66BB6A; /* Verde más oscuro */
+}
+
+.status {
+    padding: 18px; /* Más padding */
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 8px; /* Bordes redondeados */
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.2rem; /* Más grande */
+    margin-top: 15px;
+    color: #424242;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1); /* Sombra interior */
+}
+
+.status.error {
+    background: rgba(255, 87, 34, 0.2); /* Naranja más tenue */
+    border: 1px solid #FF5722;
+    color: #D84315;
+}
+
+.status.success {
+    background: rgba(102, 187, 106, 0.2); /* Verde más tenue */
+    border: 1px solid #66BB6A;
+    color: #388E3C;
+}
+
+.fen-display {
+    margin-top: 20px;
+}
+
+.fen-label {
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #424242;
+}
+
+.fen-value {
+    background: rgba(0, 0, 0, 0.08); /* Fondo más claro */
+    padding: 12px;
+    border-radius: 8px;
+    font-family: 'Courier New', Courier, monospace; /* Fuente monoespacio para FEN */
+    word-break: break-all;
+    font-size: 1rem;
+    color: #333;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.move-history {
+    max-height: 220px; /* Un poco más alto */
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.05); /* Fondo suave */
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.moves {
+    display: grid;
+    grid-template-columns: 0.5fr 1fr 1fr; /* Columna para número, Blanca, Negra */
+    gap: 8px; /* Más espacio */
+}
+
+.move {
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.8); /* Blanco más opaco */
+    border-radius: 6px;
+    text-align: center;
+    color: #333;
+    font-weight: 500;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.move-number {
+    grid-column: 1; /* El número de movimiento en la primera columna */
+    font-weight: bold;
+    margin-top: 5px;
+    color: #757575; /* Color más suave */
+    text-align: right;
+    padding-right: 5px;
+}
+
+.server-status {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 600;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.server-status.connected {
+    background: rgba(102, 187, 106, 0.2);
+    border: 1px solid #66BB6A;
+    color: #388E3C;
+}
+
+.server-status.disconnected {
+    background: rgba(255, 87, 34, 0.2);
+    border: 1px solid #FF5722;
+    color: #D84315;
+}
+
+.debug-info {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 12px;
+    border-radius: 8px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9rem;
+    margin-top: 15px;
+    max-height: 120px;
+    overflow-y: auto;
+    color: #555;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 850px) { /* Ajustado para el nuevo max-width */
+    .game-area {
+        flex-direction: column;
+        align-items: center; /* Centrar elementos en columna */
+    }
+    
+    .board-section, .controls-section {
+        min-width: 90%; /* Ocupar casi todo el ancho disponible */
+        max-width: 500px; /* Limitar el ancho máximo en pantallas pequeñas */
+    }
+    
+    h1 {
+        font-size: 2.8rem;
+    }
+
+    .subtitle {
+        font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 500px) {
+    .container {
+        padding: 20px;
+        margin: 10px; /* Margen para no pegar a los bordes */
+    }
+    h1 {
+        font-size: 2rem;
+    }
+    .panel h2 {
+        font-size: 1.5rem;
+    }
+    .square {
+        font-size: 2.2rem;
+    }
+    button {
+        padding: 10px 15px;
+        font-size: 1rem;
+    }
+}
