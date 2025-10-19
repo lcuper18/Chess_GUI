@@ -1,10 +1,11 @@
 import chess
 import chess.engine
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 # Asegúrate de que esta ruta sea correcta para tu sistema
-STOCKFISH_PATH = "/home/dw/workspace/Chess_GUI/stockfish/stockfish-ubuntu-x86-64-avx2"
+STOCKFISH_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "stockfish", "stockfish-ubuntu-x86-64-avx2")
 
 app = Flask(__name__)
 # Configuración más permisiva de CORS
