@@ -367,7 +367,7 @@ button.success:hover {
         margin: 10px; /* Margen para no pegar a los bordes */
     }
     h1 {
-        font-size: 2rem;
+        font-size: 2.rem;
     }
     .panel h2 {
         font-size: 1.5rem;
@@ -378,5 +378,34 @@ button.success:hover {
     button {
         padding: 10px 15px;
         font-size: 1rem;
+    }
+}
+
+/* Estilos para el spinner de carga */
+.thinking-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 15px 0;
+    font-size: 0.9em;
+    color: #888;
+}
+
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border-left-color: #09f;
+    animation: spin 1s ease infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
     }
 }

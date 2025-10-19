@@ -398,13 +398,22 @@ function updateMoveHistory() {
 
 // Obtener la mejor jugada del servidor
 async function getBestMove() {
-    const button = document.getElementById('getMoveBtn');
+    const getMoveBtn = document.getElementById('getMoveBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const flipBtn = document.getElementById('flipBoardBtn');
+    const undoBtn = document.getElementById('undoBtn');
     const statusElement = document.getElementById('status');
-    
-    button.disabled = true;
+    const spinner = document.getElementById('thinkingSpinner');
+
+    // Deshabilitar controles y mostrar spinner
+    getMoveBtn.disabled = true;
+    resetBtn.disabled = true;
+    flipBtn.disabled = true;
+    undoBtn.disabled = true;
+    spinner.style.display = 'flex';
     statusElement.textContent = 'Consultando a Stockfish...';
     statusElement.className = 'status';
-    
+
     try {
         const fen = document.getElementById('fen').textContent;
         
@@ -443,11 +452,17 @@ async function getBestMove() {
             throw new Error(data.error);
         }
         
-        const bestMove = data.best_move;
-        applyMoveFromNotation(bestMove);
-        statusElement.textContent = `Stockfish jugó: ${bestMove}`;
-        statusElement.className = 'status success';
-        addDebugInfo(`Movimiento aplicado: ${bestMove}`);
+        if (data.best_move) {
+            const bestMove = data.best_move;
+            applyMoveFromNotation(bestMove);
+            statusElement.textContent = `Stockfish jugó: ${bestMove}`;
+            statusElement.className = 'status success';
+            addDebugInfo(`Movimiento aplicado: ${bestMove}`);
+        } else {
+            // Caso donde el juego termina o no hay movimiento
+            statusElement.textContent = data.status || 'Respuesta inesperada del servidor.';
+            statusElement.className = 'status';
+        }
         
     } catch (error) {
         console.error('Error completo:', error);
@@ -464,7 +479,12 @@ async function getBestMove() {
             }, 1000);
         }
     } finally {
-        button.disabled = false;
+        // Habilitar controles y ocultar spinner
+        getMoveBtn.disabled = false;
+        resetBtn.disabled = false;
+        flipBtn.disabled = false;
+        undoBtn.disabled = false;
+        spinner.style.display = 'none';
         checkServerConnection();
     }
 }

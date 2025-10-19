@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>♟️</text></svg>">
     <title>Tablero de Ajedrez con Stockfish</title>
     <link rel="stylesheet" href="style.css"> 
 </head>
@@ -32,16 +33,16 @@
                         Comprobando conexión con el servidor...
                     </div>
                     <div class="controls">
-                        <button id="getMoveBtn">
+                        <button id="getMoveBtn" title="Pedir al motor que calcule la mejor jugada">
                             <span>🤖</span> Mejor Jugada
                         </button>
-                        <button id="resetBtn" class="secondary">
+                        <button id="resetBtn" class="secondary" title="Reiniciar la partida a la posición inicial">
                             <span>🔄</span> Reiniciar
                         </button>
-                        <button id="flipBoardBtn">
+                        <button id="flipBoardBtn" title="Voltear la vista del tablero">
                             <span>↔️</span> Voltear Tablero
                         </button>
-                        <button id="undoBtn">
+                        <button id="undoBtn" title="Deshacer el último movimiento">
                             <span>↶</span> Deshacer
                         </button>
                     </div>
