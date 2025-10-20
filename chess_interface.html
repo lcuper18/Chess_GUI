@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>♟️</text></svg>">
     <title>Tablero de Ajedrez con Stockfish</title>
-    <link rel="stylesheet" href="style.css"> 
+    <!-- CSS de la biblioteca chessboard.js -->
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <!-- Tus estilos personalizados (deben ir después para poder sobreescribir) -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
@@ -17,8 +20,8 @@
         <div class="game-area">
             <div class="board-section">
                 <div class="board-container">
-                    <div class="chessboard" id="chessboard">
-                        </div>
+                    <!-- Este div será el contenedor para el tablero generado por chessboard.js -->
+                    <div id="board" style="width: 100%"></div>
                 </div>
             </div>
 
@@ -70,6 +73,12 @@
         </div>
     </div>
 
+    <!-- Bibliotecas de ajedrez -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.min.js"></script>
+    
+    <!-- Tu script principal (debe ir al final) -->
     <script src="script.js"></script>
 </body>
 </html>
