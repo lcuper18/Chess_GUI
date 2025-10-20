@@ -8,7 +8,7 @@ from datetime import datetime
 init(autoreset=True)
 
 # Ruta al ejecutable de Stockfish (ajústala según tu sistema)
-STOCKFISH_PATH = "/usr/games/stockfish"
+STOCKFISH_PATH = os.environ.get("STOCKFISH_PATH", os.path.join(os.path.dirname(os.path.abspath(__file__)), "stockfish", "stockfish-ubuntu-x86-64-avx2"))
 
 # Configurar el motor
 stockfish = Stockfish(

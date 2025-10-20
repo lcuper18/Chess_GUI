@@ -28,7 +28,7 @@ class StockfishEngine:
         try:
             logging.info(f"Inicializando Stockfish desde: {self.path}")
             self.engine = chess.engine.SimpleEngine.popen_uci(self.path)
-            self.engine.configure({"Skill Level": 20})  # Nivel máximo
+            self.engine.configure({"Skill Level": 10})  # Nivel máximo
             logging.info("Stockfish inicializado correctamente.")
             return True
         except Exception as e:
