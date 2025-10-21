@@ -69,7 +69,7 @@ app = Flask(__name__)
 CORS(app) # Configuración de CORS simplificada y permisiva para desarrollo
 
 # La ruta a Stockfish se puede configurar con la variable de entorno STOCKFISH_PATH
-STOCKFISH_PATH = os.environ.get("STOCKFISH_PATH", os.path.join(os.path.dirname(os.path.abspath(__file__)), "stockfish", "stockfish-ubuntu-x86-64-avx2"))
+STOCKFISH_PATH = os.environ.get("STOCKFISH_PATH", os.path.join(os.path.dirname(os.path.abspath(__file__)), "engines/stockfish", "stockfish-ubuntu-x86-64-avx2"))
 
 # Crear una instancia única del motor
 stockfish_engine = StockfishEngine(STOCKFISH_PATH)
