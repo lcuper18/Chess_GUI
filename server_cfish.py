@@ -3,7 +3,7 @@ import chess.engine
 import os
 
 # Configuración correcta
-CFISH_PATH = "/home/dw/workspace/Chess_GUI/engines/Cfish_Linux/Cfish 060821 x64 general"
+CFISH_PATH = os.environ.get("STOCKFISH_PATH", os.path.join(os.path.dirname(os.path.abspath(__file__)), "engines/Cfish_Linux", "Cfish 060821 x64 general"))
 
 def jugar_vs_cfish():
     # Cambiar al directorio del motor para que encuentre el archivo NNUE
