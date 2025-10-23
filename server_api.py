@@ -7,6 +7,8 @@ import threading
 import time
 import uuid
 from flask import send_file, send_from_directory
+import atexit
+import signal
 
 app = Flask(__name__)
 CORS(app)  # Permitir requests desde web/Android
@@ -14,27 +16,96 @@ CORS(app)  # Permitir requests desde web/Android
 # Configuración del motor (usando tu misma configuración)
 CFISH_PATH = os.environ.get("STOCKFISH_PATH", os.path.join(os.path.dirname(os.path.abspath(__file__)), "engines/Cfish_Linux", "Cfish 060821 x64 general"))
 
+# Configuración de límites
+MAX_PARTIDAS = 100
+MAX_TIEMPO_PARTIDA = 24 * 60 * 60  # 24 horas
+
 # Estado global del juego
 partidas = {}
 motor_lock = threading.Lock()
 
 def inicializar_motor():
-    """Inicializa el motor de chess usando tu configuración"""
+    """Inicializa el motor de chess con manejo robusto de errores"""
     try:
-        # Cambiar al directorio del motor para que encuentre el archivo NNUE
         motor_dir = os.path.dirname(CFISH_PATH)
         motor_nombre = os.path.basename(CFISH_PATH)
-        os.chdir(motor_dir)
         
+        # Guardar directorio actual para restaurarlo después
+        directorio_original = os.getcwd()
+        
+        if not os.path.exists(CFISH_PATH):
+            print(f"❌ Archivo del motor no encontrado: {CFISH_PATH}")
+            return None
+            
+        os.chdir(motor_dir)
         engine = chess.engine.SimpleEngine.popen_uci(f"./{motor_nombre}")
+        
+        # Restaurar directorio original
+        os.chdir(directorio_original)
+        
+        # Configurar parámetros del motor
+        engine.configure({"Hash": 256, "Threads": 2})
+        
         print("✅ Motor de chess inicializado correctamente")
         return engine
+        
     except Exception as e:
-        print(f"❌ Error iniciando motor: {e}")
+        print(f"❌ Error crítico iniciando motor: {e}")
+        # Restaurar directorio en caso de error
+        if 'directorio_original' in locals():
+            os.chdir(directorio_original)
         return None
+
+# Cierre graceful del motor
+def cerrar_motor():
+    """Cierra el motor de ajedrez de forma segura"""
+    global engine
+    if engine:
+        try:
+            engine.quit()
+            print("✅ Motor de chess cerrado correctamente")
+        except Exception as e:
+            print(f"⚠️ Error cerrando motor: {e}")
+        finally:
+            engine = None
+
+# Registrar handlers para cierre graceful
+atexit.register(cerrar_motor)
+def signal_handler(sig, frame):
+    print(f"\n🛑 Recibida señal {sig}, cerrando...")
+    cerrar_motor()
+    exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
 
 # Motor global (se reutiliza)
 engine = inicializar_motor()
+
+def limpiar_partidas_antiguas():
+    """Limpia partidas antiguas automáticamente"""
+    ahora = time.time()
+    partidas_a_eliminar = []
+    
+    for partida_id, partida in partidas.items():
+        tiempo_vida = ahora - partida['creado']
+        if (tiempo_vida > MAX_TIEMPO_PARTIDA or 
+            len(partidas) > MAX_PARTIDAS and partida['board'].is_game_over()):
+            partidas_a_eliminar.append(partida_id)
+    
+    for partida_id in partidas_a_eliminar:
+        del partidas[partida_id]
+        print(f"🧹 Partida {partida_id} eliminada por limpieza automática")
+
+# Ejecutar limpieza periódica
+def iniciar_limpieza_periodica():
+    def limpiar_periodicamente():
+        while True:
+            time.sleep(3600)  # Cada hora
+            with motor_lock:
+                limpiar_partidas_antiguas()
+    
+    threading.Thread(target=limpiar_periodicamente, daemon=True).start()
 
 def tablero_a_json(board):
     """Convierte un tablero de chess a formato JSON para el frontend"""
@@ -90,6 +161,10 @@ def obtener_unicode_pieza(simbolo):
 def nueva_partida():
     """Crea una nueva partida contra Cfish"""
     try:
+        # Limpieza automática antes de crear nueva partida
+        if len(partidas) >= MAX_PARTIDAS:
+            limpiar_partidas_antiguas()
+        
         partida_id = str(uuid.uuid4())
         board = chess.Board()
         
@@ -110,11 +185,12 @@ def nueva_partida():
         })
         
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        print(f"❌ Error en nueva_partida: {e}")
+        return jsonify({'success': False, 'error': 'Error interno del servidor'}), 500
 
 @app.route('/api/estado/<partida_id>', methods=['GET'])
 def obtener_estado(partida_id):
-    """Obtiene el estado actual de una partida"""
+    """Obtiene el estado actual de una partida con información extendida"""
     try:
         if partida_id not in partidas:
             return jsonify({'success': False, 'error': 'Partida no encontrada'}), 404
@@ -124,43 +200,67 @@ def obtener_estado(partida_id):
         
         estado = {
             'success': True,
+            'partida_id': partida_id,
             'tablero': tablero_a_json(board),
-            'historial': partida['historial'],
+            'historial': partida['historial'][-10:],  # Últimos 10 movimientos
             'es_turno_humano': board.turn == chess.WHITE,
             'juego_terminado': board.is_game_over(),
-            'movimientos_totales': len(partida['historial'])
+            'movimientos_totales': len(partida['historial']),
+            'motor_activo': engine is not None
         }
         
         if board.is_game_over():
+            outcome = board.outcome()
             estado['resultado'] = board.result()
-            estado['terminacion'] = str(board.outcome().termination) if board.outcome() else 'unknown'
+            estado['terminacion'] = str(outcome.termination) if outcome else 'unknown'
+            estado['ganador'] = 'blancas' if outcome and outcome.winner == chess.WHITE else \
+                              'negras' if outcome and outcome.winner == chess.BLACK else 'tablas'
         
         return jsonify(estado)
         
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        print(f"❌ Error en obtener_estado: {e}")
+        return jsonify({'success': False, 'error': 'Error interno del servidor'}), 500
 
 @app.route('/api/jugar/<partida_id>', methods=['POST'])
 def jugar_movimiento(partida_id):
-    """Ejecuta un movimiento del jugador humano"""
+    """Ejecuta un movimiento del jugador humano con validaciones mejoradas"""
     try:
+        # Validar partida
         if partida_id not in partidas:
             return jsonify({'success': False, 'error': 'Partida no encontrada'}), 404
         
+        # Validar datos de entrada
         data = request.get_json()
         if not data or 'movimiento' not in data:
             return jsonify({'success': False, 'error': 'Movimiento no proporcionado'}), 400
         
         movimiento_uci = data.get('movimiento', '').strip().lower()
         
+        # Validar formato básico
+        if len(movimiento_uci) < 4 or len(movimiento_uci) > 5:
+            return jsonify({'success': False, 'error': 'Formato de movimiento inválido'}), 400
+        
         partida = partidas[partida_id]
         board = partida['board']
         
+        # Verificar que el juego no ha terminado
+        if board.is_game_over():
+            return jsonify({
+                'success': False, 
+                'error': 'La partida ha terminado',
+                'resultado': board.result()
+            }), 400
+        
         # Verificar que es turno del humano
         if board.turn != chess.WHITE:
-            return jsonify({'success': False, 'error': 'No es tu turno'}), 400
+            return jsonify({
+                'success': False, 
+                'error': 'No es tu turno',
+                'es_turno_humano': False
+            }), 400
         
-        # Validar movimiento (igual que en tu código)
+        # Validar movimiento
         try:
             move = chess.Move.from_uci(movimiento_uci)
             if move not in board.legal_moves:
@@ -169,10 +269,13 @@ def jugar_movimiento(partida_id):
                     'error': 'Movimiento ilegal',
                     'jugadas_legales': [m.uci() for m in board.legal_moves]
                 }), 400
-        except ValueError:
-            return jsonify({'success': False, 'error': 'Formato de movimiento inválido. Use notación UCI (ej: e2e4)'}), 400
+        except ValueError as ve:
+            return jsonify({
+                'success': False, 
+                'error': f'Formato de movimiento inválido: {str(ve)}'
+            }), 400
         
-        # Ejecutar movimiento humano (igual que en tu código)
+        # Ejecutar movimiento humano
         board.push(move)
         notacion_san = board.san(move)
         
@@ -185,51 +288,75 @@ def jugar_movimiento(partida_id):
         
         print(f"👤 Jugador jugó: {movimiento_uci} ({notacion_san}) en partida {partida_id}")
         
+        # Preparar respuesta
         respuesta = {
             'success': True,
             'movimiento_ejecutado': movimiento_uci,
             'notacion': notacion_san,
             'tablero': tablero_a_json(board),
-            'juego_terminado': board.is_game_over()
+            'juego_terminado': board.is_game_over(),
+            'es_turno_humano': False  # Ahora es turno del motor
         }
         
-        # Si el juego continúa, hacer que juegue el motor (igual que en tu código)
-        if not board.is_game_over():
-            threading.Thread(target=jugar_motor, args=(partida_id,)).start()
-            respuesta['motor_pensando'] = True
-            respuesta['mensaje'] = 'Cfish está pensando...'
+        # Manejar fin del juego
+        if board.is_game_over():
+            resultado = board.result()
+            respuesta['resultado'] = resultado
+            respuesta['mensaje'] = f'Partida terminada: {resultado}'
+            print(f"🏁 Partida {partida_id} terminada: {resultado}")
         else:
-            respuesta['resultado'] = board.result()
-            print(f"🏁 Partida {partida_id} terminada: {board.result()}")
+            # Iniciar movimiento del motor en segundo plano
+            if engine is not None:
+                threading.Thread(target=jugar_motor, args=(partida_id,), daemon=True).start()
+                respuesta['motor_pensando'] = True
+                respuesta['mensaje'] = 'Cfish está pensando...'
+            else:
+                respuesta['error'] = 'Motor no disponible'
+                respuesta['motor_pensando'] = False
         
         return jsonify(respuesta)
         
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        print(f"❌ Error en jugar_movimiento: {e}")
+        return jsonify({'success': False, 'error': 'Error interno del servidor'}), 500
 
 def jugar_motor(partida_id):
-    """Función para que juegue el motor (basada en tu código)"""
+    """Función mejorada para que juegue el motor con mejor manejo de errores"""
     if partida_id not in partidas:
         return
     
     partida = partidas[partida_id]
     board = partida['board']
     
-    # Pequeña pausa para mejor UX
-    time.sleep(0.5)
-    
-    if board.is_game_over() or board.turn == chess.WHITE:
+    # Verificaciones adicionales
+    if (board.is_game_over() or 
+        board.turn == chess.WHITE or 
+        engine is None):
         return
+    
+    # Pausa para mejor UX
+    time.sleep(0.5)
     
     with motor_lock:
         try:
             print(f"🤖 Motor pensando en partida {partida_id}...")
             
-            # Usar la misma configuración de tiempo que en tu código
-            result = engine.play(board, chess.engine.Limit(time=2.0))
+            # Configuración robusta con timeout
+            limit = chess.engine.Limit(time=2.0)
+            result = engine.play(board, limit)
+            
+            if result.move is None:
+                print(f"⚠️ Motor no devolvió movimiento en partida {partida_id}")
+                return
+                
             move = result.move
             
-            # Actualizar el board
+            # Verificar que el movimiento es legal
+            if move not in board.legal_moves:
+                print(f"❌ Movimiento ilegal del motor: {move.uci()}")
+                return
+            
+            # Ejecutar movimiento
             board.push(move)
             notacion_san = board.san(move)
             
@@ -242,6 +369,8 @@ def jugar_motor(partida_id):
                 
             print(f"🤖 Motor jugó: {move.uci()} ({notacion_san}) en partida {partida_id}")
             
+        except chess.engine.EngineTerminatedError:
+            print(f"❌ Motor terminado inesperadamente en partida {partida_id}")
         except Exception as e:
             print(f"❌ Error del motor en partida {partida_id}: {e}")
 
@@ -253,17 +382,30 @@ def obtener_jugadas_legales(partida_id):
             return jsonify({'success': False, 'error': 'Partida no encontrada'}), 404
         
         board = partidas[partida_id]['board']
+        
+        # Verificar que no es juego terminado
+        if board.is_game_over():
+            return jsonify({
+                'success': True,
+                'jugadas_legales': [],
+                'es_turno_humano': board.turn == chess.WHITE,
+                'total_jugadas': 0,
+                'juego_terminado': True
+            })
+        
         jugadas = [move.uci() for move in board.legal_moves]
         
         return jsonify({
             'success': True,
             'jugadas_legales': jugadas,
             'es_turno_humano': board.turn == chess.WHITE,
-            'total_jugadas': len(jugadas)
+            'total_jugadas': len(jugadas),
+            'juego_terminado': False
         })
         
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        print(f"❌ Error en obtener_jugadas_legales: {e}")
+        return jsonify({'success': False, 'error': 'Error interno del servidor'}), 500
 
 @app.route('/api/rendirse/<partida_id>', methods=['POST'])
 def rendirse(partida_id):
@@ -286,7 +428,8 @@ def rendirse(partida_id):
         })
         
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        print(f"❌ Error en rendirse: {e}")
+        return jsonify({'success': False, 'error': 'Error interno del servidor'}), 500
 
 @app.route('/api/partidas', methods=['GET'])
 def listar_partidas():
@@ -294,22 +437,26 @@ def listar_partidas():
     try:
         partidas_lista = []
         for pid, partida in partidas.items():
+            board = partida['board']
             partidas_lista.append({
                 'partida_id': pid,
                 'creado': partida['creado'],
                 'movimientos': len(partida['historial']),
-                'terminada': partida['board'].is_game_over(),
-                'resultado': partida['board'].result() if partida['board'].is_game_over() else 'en_progreso'
+                'terminada': board.is_game_over(),
+                'resultado': board.result() if board.is_game_over() else 'en_progreso',
+                'ultimo_movimiento': partida['historial'][-1] if partida['historial'] else None
             })
         
         return jsonify({
             'success': True,
-            'partidas': partidas_lista,
-            'total': len(partidas_lista)
+            'partidas': sorted(partidas_lista, key=lambda x: x['creado'], reverse=True),
+            'total': len(partidas_lista),
+            'limite': MAX_PARTIDAS
         })
         
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        print(f"❌ Error en listar_partidas: {e}")
+        return jsonify({'success': False, 'error': 'Error interno del servidor'}), 500
 
 @app.route('/api/reiniciar/<partida_id>', methods=['POST'])
 def reiniciar_partida(partida_id):
@@ -332,15 +479,19 @@ def reiniciar_partida(partida_id):
         })
         
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        print(f"❌ Error en reiniciar_partida: {e}")
+        return jsonify({'success': False, 'error': 'Error interno del servidor'}), 500
 
 @app.route('/api/info', methods=['GET'])
 def info_api():
     """Información sobre la API"""
     return jsonify({
         'name': 'Chess Cfish API',
-        'version': '1.0',
+        'version': '1.1',
         'engine': 'Cfish',
+        'motor_activo': engine is not None,
+        'partidas_activas': len(partidas),
+        'limite_partidas': MAX_PARTIDAS,
         'endpoints': {
             'nueva_partida': 'POST /api/nueva-partida',
             'estado': 'GET /api/estado/<partida_id>',
@@ -348,20 +499,39 @@ def info_api():
             'jugadas_legales': 'GET /api/jugadas-legales/<partida_id>',
             'rendirse': 'POST /api/rendirse/<partida_id>',
             'partidas': 'GET /api/partidas',
-            'reiniciar': 'POST /api/reiniciar/<partida_id>'
+            'reiniciar': 'POST /api/reiniciar/<partida_id>',
+            'health': 'GET /api/health',
+            'info': 'GET /api/info'
         }
     })
 
-# Health check
 @app.route('/api/health', methods=['GET'])
 def health_check():
-    """Verifica que el servidor y motor estén funcionando"""
+    """Verifica que el servidor y motor estén funcionando con más detalles"""
     motor_activo = engine is not None
+    estado_motor = "healthy" if motor_activo else "degraded"
+    
+    # Verificar que el motor responde
+    motor_responsive = False
+    if motor_activo:
+        try:
+            with motor_lock:
+                # Test rápido del motor
+                board = chess.Board()
+                engine.ping()
+            motor_responsive = True
+        except:
+            motor_responsive = False
+            estado_motor = "degraded"
+    
     return jsonify({
-        'status': 'healthy' if motor_activo else 'degraded',
+        'status': estado_motor,
         'motor_activo': motor_activo,
+        'motor_responsive': motor_responsive,
         'partidas_activas': len(partidas),
-        'timestamp': time.time()
+        'partidas_terminadas': sum(1 for p in partidas.values() if p['board'].is_game_over()),
+        'timestamp': time.time(),
+        'version': '1.1'
     })
 
 @app.route('/')
@@ -373,25 +543,63 @@ def index():
         # Si no existe, mostrar página simple
         return '''
         <html>
-        <head><title>Chess API</title></head>
+        <head>
+            <title>Chess API</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 40px; }
+                h1 { color: #333; }
+                a { color: #007bff; text-decoration: none; }
+                a:hover { text-decoration: underline; }
+                .endpoint { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 4px; }
+            </style>
+        </head>
         <body>
-            <h1>Chess Cfish API</h1>
+            <h1>♟️ Chess Cfish API</h1>
+            <p>API de ajedrez con motor Cfish</p>
+            
+            <h2>📚 Documentación</h2>
             <p>El manual está en <a href="/docs/manual.html">/docs/manual.html</a></p>
-            <p><a href="/api/health">Health Check</a></p>
+            
+            <h2>🔍 Endpoints principales</h2>
+            <div class="endpoint"><strong>GET</strong> <a href="/api/health">/api/health</a> - Estado del servidor</div>
+            <div class="endpoint"><strong>GET</strong> <a href="/api/info">/api/info</a> - Información de la API</div>
+            <div class="endpoint"><strong>POST</strong> /api/nueva-partida - Crear nueva partida</div>
+            <div class="endpoint"><strong>GET</strong> <a href="/api/partidas">/api/partidas</a> - Listar partidas</div>
+            
+            <p><strong>Versión:</strong> 1.1</p>
+            <p><strong>Motor:</strong> {}</p>
         </body>
         </html>
-        '''
+        '''.format("Cfish ✅" if engine else "Cfish ❌ (No disponible)")
 
 @app.route('/docs/<path:filename>')
 def serve_docs(filename):
     """Sirve archivos de documentación"""
     return send_from_directory('docs', filename)
 
+# Error handlers
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({'success': False, 'error': 'Endpoint no encontrado'}), 404
+
+@app.errorhandler(405)
+def method_not_allowed(error):
+    return jsonify({'success': False, 'error': 'Método no permitido'}), 405
+
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({'success': False, 'error': 'Error interno del servidor'}), 500
+
 if __name__ == '__main__':
     if engine:
+        # Iniciar limpieza automática
+        iniciar_limpieza_periodica()
+        
         print("🚀 Servidor de Chess API iniciado!")
         print("📡 Disponible en: http://localhost:5000")
         print("🔧 Motor configurado desde: {}".format(CFISH_PATH))
+        print("🛡️  Modo: {}".format("DEBUG" if os.environ.get('FLASK_DEBUG') else "PRODUCTION"))
+        print("📊 Límite de partidas: {}".format(MAX_PARTIDAS))
         print("\n📋 Endpoints principales:")
         print("   POST /api/nueva-partida     - Crear nueva partida")
         print("   POST /api/jugar/<id>        - Jugar movimiento")
@@ -399,6 +607,20 @@ if __name__ == '__main__':
         print("   GET  /api/jugadas-legales/<id> - Jugadas legales")
         print("   GET  /api/health            - Estado del servidor")
         
-        app.run(host='0.0.0.0', port=5000, debug=True, threaded=True)
+        # Configuración de producción
+        debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+        
+        app.run(
+            host='0.0.0.0', 
+            port=5000, 
+            debug=debug_mode, 
+            threaded=True,
+            use_reloader=debug_mode  # Evitar reloader en producción
+        )
     else:
         print("❌ No se pudo iniciar el motor de chess. Verifica la configuración.")
+        print("💡 Asegúrate de que:")
+        print("   - La ruta CFISH_PATH es correcta: {}".format(CFISH_PATH))
+        print("   - El archivo del motor existe y tiene permisos de ejecución")
+        print("   - Las dependencias del motor (libs) están instaladas")
+        exit(1)
