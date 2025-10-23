@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Uso - Chess Cfish API</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--secondary-color);
+            font-size: 1.4em;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--secondary-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        h3 {
+            color: var(--dark-color);
+            margin: 25px 0 15px 0;
+            font-size: 1.4em;
+        }
+
+        .endpoint {
+            background: var(--light-color);
+            border-left: 4px solid var(--secondary-color);
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .method {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 6px;
+            color: white;
+            font-weight: bold;
+            margin-right: 10px;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .post { background: var(--success-color); }
+        .get { background: var(--secondary-color); }
+
+        .url {
+            font-family: 'Courier New', monospace;
+            background: #2c3e50;
+            color: white;
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            word-break: break-all;
+        }
+
+        .code-block {
+            background: #2c3e50;
+            color: var(--light-color);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .example {
+            background: #e8f4fd;
+            border-left: 4px solid var(--secondary-color);
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .response {
+            background: #e8f6ef;
+            border-left: 4px solid var(--success-color);
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .feature {
+            text-align: center;
+            padding: 25px;
+        }
+
+        .feature i {
+            font-size: 3em;
+            color: var(--secondary-color);
+            margin-bottom: 15px;
+        }
+
+        .feature h3 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .demo-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+        }
+
+        .demo-controls {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        input {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .demo-output {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            min-height: 100px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+        }
+
+        .chess-board {
+            display: inline-grid;
+            grid-template-columns: repeat(8, 50px);
+            grid-template-rows: repeat(8, 50px);
+            border: 3px solid var(--dark-color);
+            margin: 20px 0;
+        }
+
+        .square {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 35px;
+        }
+
+        .white { background: #f0d9b5; }
+        .black { background: #b58863; }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .online { background: var(--success-color); }
+        .offline { background: var(--accent-color); }
+
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            color: white;
+            padding: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .demo-controls {
+                flex-direction: column;
+            }
+            
+            input {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>♟️ Chess Cfish API</h1>
+            <p class="subtitle">Manual Completo de Uso e Integración</p>
+            <p>API RESTful para jugar al ajedrez contra el motor Cfish</p>
+        </header>
+
+        <div class="card">
+            <h2>📋 Introducción</h2>
+            <p>La Chess Cfish API es una interfaz RESTful que permite integrar el poderoso motor de ajedrez Cfish en tus aplicaciones web, móviles o de escritorio.</p>
+            
+            <div class="grid">
+                <div class="feature">
+                    <div>⚡</div>
+                    <h3>Alto Rendimiento</h3>
+                    <p>Motor Cfish optimizado para respuestas rápidas</p>
+                </div>
+                <div class="feature">
+                    <div>🔗</div>
+                    <h3>RESTful API</h3>
+                    <p>Interfaz estándar HTTP/JSON fácil de integrar</p>
+                </div>
+                <div class="feature">
+                    <div>🌐</div>
+                    <h3>Multiplataforma</h3>
+                    <p>Compatible con web, Android, iOS y más</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🚀 Configuración Inicial</h2>
+            
+            <h3>URL Base</h3>
+            <div class="url">http://localhost:5000</div>
+            
+            <h3>Headers Recomendados</h3>
+            <div class="code-block">
+Content-Type: application/json
+Accept: application/json
+            </div>
+            
+            <h3>Verificar Estado del Servidor</h3>
+            <div class="endpoint">
+                <span class="method get">GET</span> <strong>/api/health</strong>
+                <p>Verifica que el servidor y el motor estén funcionando correctamente.</p>
+            </div>
+            
+            <div class="example">
+                <strong>Ejemplo de solicitud:</strong>
+                <div class="code-block">
+fetch('http://localhost:5000/api/health')
+  .then(response => response.json())
+  .then(data => console.log(data));
+                </div>
+            </div>
+            
+            <div class="response">
+                <strong>Respuesta esperada:</strong>
+                <div class="code-block">
+{
+  "status": "healthy",
+  "motor_activo": true,
+  "partidas_activas": 0,
+  "timestamp": 1697824567.123456
+}
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🎯 Endpoints Principales</h2>
+
+            <h3>1. Crear Nueva Partida</h3>
+            <div class="endpoint">
+                <span class="method post">POST</span> <strong>/api/nueva-partida</strong>
+                <p>Crea una nueva partida. El jugador humano siempre juega con las piezas blancas.</p>
+            </div>
+
+            <div class="example">
+                <strong>Ejemplo de solicitud:</strong>
+                <div class="code-block">
+// JavaScript
+const response = await fetch('http://localhost:5000/api/nueva-partida', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    }
+});
+const data = await response.json();
+                </div>
+
+                <div class="code-block">
+# cURL
+curl -X POST http://localhost:5000/api/nueva-partida \
+  -H "Content-Type: application/json"
+                </div>
+            </div>
+
+            <div class="response">
+                <strong>Respuesta exitosa:</strong>
+                <div class="code-block">
+{
+  "success": true,
+  "partida_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "tablero": {
+    "posiciones": [...],
+    "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+    "es_turno_blancas": true,
+    "jugadas_legales": ["e2e4", "d2d4", "g1f3", ...],
+    "es_jaque": false,
+    "es_jaque_mate": false
+  },
+  "mensaje": "Partida creada. Eres las blancas!"
+}
+                </div>
+            </div>
+
+            <h3>2. Jugar Movimiento</h3>
+            <div class="endpoint">
+                <span class="method post">POST</span> <strong>/api/jugar/&lt;partida_id&gt;</strong>
+                <p>Ejecuta un movimiento del jugador humano usando notación UCI.</p>
+            </div>
+
+            <table>
+                <tr>
+                    <th>Parámetro</th>
+                    <th>Tipo</th>
+                    <th>Descripción</th>
+                    <th>Ejemplo</th>
+                </tr>
+                <tr>
+                    <td>movimiento</td>
+                    <td>string</td>
+                    <td>Movimiento en notación UCI</td>
+                    <td>"e2e4", "g1f3", "e7e5"</td>
+                </tr>
+            </table>
+
+            <div class="example">
+                <strong>Ejemplo de solicitud:</strong>
+                <div class="code-block">
+// JavaScript
+const response = await fetch('http://localhost:5000/api/jugar/a1b2c3d4-e5f6-7890-abcd-ef1234567890', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        movimiento: 'e2e4'
+    })
+});
+                </div>
+            </div>
+
+            <h3>3. Obtener Estado de Partida</h3>
+            <div class="endpoint">
+                <span class="method get">GET</span> <strong>/api/estado/&lt;partida_id&gt;</strong>
+                <p>Obtiene el estado actual de una partida específica.</p>
+            </div>
+
+            <h3>4. Listar Jugadas Legales</h3>
+            <div class="endpoint">
+                <span class="method get">GET</span> <strong>/api/jugadas-legales/&lt;partida_id&gt;</strong>
+                <p>Obtiene todas las jugadas legales para la posición actual.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🎮 Notación de Movimientos</h2>
+            
+            <h3>Notación UCI (Universal Chess Interface)</h3>
+            <p>La API utiliza notación UCI para los movimientos. Formato: <strong>[casilla_origen][casilla_destino]</strong></p>
+            
+            <table>
+                <tr>
+                    <th>Movimiento</th>
+                    <th>Descripción</th>
+                    <th>Notación Algebraica</th>
+                </tr>
+                <tr>
+                    <td><code>e2e4</code></td>
+                    <td>Peón de e2 a e4</td>
+                    <td>e4</td>
+                </tr>
+                <tr>
+                    <td><code>g1f3</code></td>
+                    <td>Caballo de g1 a f3</td>
+                    <td>Nf3</td>
+                </tr>
+                <tr>
+                    <td><code>e1g1</code></td>
+                    <td>Enroque corto (rey-side)</td>
+                    <td>O-O</td>
+                </tr>
+                <tr>
+                    <td><code>e7e8q</code></td>
+                    <td>Coronación a dama</td>
+                    <td>e8=Q</td>
+                </tr>
+            </table>
+
+            <div class="chess-board">
+                <!-- Ejemplo visual del tablero -->
+                <div class="square white">♖</div><div class="square black">♘</div><div class="square white">♗</div><div class="square black">♕</div>
+                <div class="square white">♔</div><div class="square black">♗</div><div class="square white">♘</div><div class="square black">♖</div>
+                <!-- ... más casillas ... -->
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🔧 Manejo de Errores</h2>
+            
+            <p>Todos los endpoints retornan respuestas consistentes con el campo <code>success</code>.</p>
+
+            <div class="response">
+                <strong>Respuesta de error típica:</strong>
+                <div class="code-block">
+{
+  "success": false,
+  "error": "Descripción del error"
+}
+                </div>
+            </div>
+
+            <table>
+                <tr>
+                    <th>Código HTTP</th>
+                    <th>Error</th>
+                    <th>Descripción</th>
+                </tr>
+                <tr>
+                    <td>400</td>
+                    <td>Movimiento ilegal</td>
+                    <td>El movimiento no es válido para la posición actual</td>
+                </tr>
+                <tr>
+                    <td>400</td>
+                    <td>No es tu turno</td>
+                    <td>Intento de jugar cuando es turno del motor</td>
+                </tr>
+                <tr>
+                    <td>404</td>
+                    <td>Partida no encontrada</td>
+                    <td>El ID de partida no existe</td>
+                </tr>
+                <tr>
+                    <td>500</td>
+                    <td>Error interno</td>
+                    <td>Problema con el motor de ajedrez</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="demo-section">
+            <h2>🧪 Demo Interactivo</h2>
+            
+            <div class="demo-controls">
+                <button onclick="checkHealth()">Verificar Salud API</button>
+                <button onclick="createGame()">Nueva Partida</button>
+                <input type="text" id="moveInput" placeholder="Ingresa movimiento (ej: e2e4)">
+                <button onclick="makeMove()" id="moveButton" disabled>Jugar Movimiento</button>
+            </div>
+
+            <div class="demo-output" id="demoOutput">
+Presiona "Verificar Salud API" para comenzar...
+            </div>
+
+            <div id="gameInfo" style="margin-top: 20px;"></div>
+        </div>
+
+        <div class="card">
+            <h2>📚 Ejemplos de Integración</h2>
+
+            <h3>JavaScript/React</h3>
+            <div class="code-block">
+class ChessGame {
+    constructor() {
+        this.baseUrl = 'http://localhost:5000';
+        this.gameId = null;
+    }
+
+    async createNewGame() {
+        try {
+            const response = await fetch(`${this.baseUrl}/api/nueva-partida`, {
+                method: 'POST'
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                this.gameId = data.partida_id;
+                return data;
+            } else {
+                throw new Error(data.error);
+            }
+        } catch (error) {
+            console.error('Error creating game:', error);
+        }
+    }
+
+    async makeMove(move) {
+        if (!this.gameId) throw new Error('No active game');
+        
+        const response = await fetch(`${this.baseUrl}/api/jugar/${this.gameId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ movimiento: move })
+        });
+        
+        return await response.json();
+    }
+
+    async getGameState() {
+        if (!this.gameId) throw new Error('No active game');
+        
+        const response = await fetch(`${this.baseUrl}/api/estado/${this.gameId}`);
+        return await response.json();
+    }
+}
+            </div>
+
+            <h3>Python</h3>
+            <div class="code-block">
+import requests
+
+class ChessAPIClient:
+    def __init__(self, base_url="http://localhost:5000"):
+        self.base_url = base_url
+    
+    def create_game(self):
+        response = requests.post(f"{self.base_url}/api/nueva-partida")
+        return response.json()
+    
+    def make_move(self, game_id, move):
+        response = requests.post(
+            f"{self.base_url}/api/jugar/{game_id}",
+            json={"movimiento": move}
+        )
+        return response.json()
+    
+    def get_game_state(self, game_id):
+        response = requests.get(f"{self.base_url}/api/estado/{game_id}")
+        return response.json()
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Chess Cfish API - Documentación Completa</p>
+        <p>Para soporte técnico o consultas, revisa la documentación del código fuente.</p>
+    </footer>
+
+    <script>
+        let currentGameId = null;
+        const baseUrl = 'http://localhost:5000';
+
+        async function checkHealth() {
+            const output = document.getElementById('demoOutput');
+            output.innerHTML = '🔍 Verificando estado del servidor...';
+            
+            try {
+                const response = await fetch(`${baseUrl}/api/health`);
+                const data = await response.json();
+                
+                output.innerHTML = `✅ Servidor: ${data.status}\n` +
+                                 `🤖 Motor: ${data.motor_activo ? 'ACTIVO' : 'INACTIVO'}\n` +
+                                 `🎮 Partidas activas: ${data.partidas_activas}\n` +
+                                 `🕐 Última verificación: ${new Date().toLocaleTimeString()}`;
+            } catch (error) {
+                output.innerHTML = `❌ Error conectando con el servidor:\n${error.message}`;
+            }
+        }
+
+        async function createGame() {
+            const output = document.getElementById('demoOutput');
+            output.innerHTML = '🎮 Creando nueva partida...';
+            
+            try {
+                const response = await fetch(`${baseUrl}/api/nueva-partida`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentGameId = data.partida_id;
+                    document.getElementById('moveButton').disabled = false;
+                    
+                    output.innerHTML = `✅ Partida creada exitosamente!\n` +
+                                     `📋 ID: ${data.partida_id}\n` +
+                                     `🎯 Eres las BLANCAS (juegas primero)\n` +
+                                     `💡 Jugadas legales iniciales: ${data.tablero.jugadas_legales.slice(0, 5).join(', ')}...`;
+                } else {
+                    output.innerHTML = `❌ Error: ${data.error}`;
+                }
+            } catch (error) {
+                output.innerHTML = `❌ Error: ${error.message}`;
+            }
+        }
+
+        async function makeMove() {
+            const moveInput = document.getElementById('moveInput');
+            const move = moveInput.value.trim();
+            const output = document.getElementById('demoOutput');
+            
+            if (!move) {
+                output.innerHTML = '❌ Por favor ingresa un movimiento';
+                return;
+            }
+            
+            if (!currentGameId) {
+                output.innerHTML = '❌ Primero crea una partida';
+                return;
+            }
+            
+            output.innerHTML = `⏳ Jugando: ${move}...`;
+            
+            try {
+                const response = await fetch(`${baseUrl}/api/jugar/${currentGameId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ movimiento: move })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    let result = `✅ Movimiento ejecutado: ${move}\n`;
+                    result += `📝 Notación: ${data.notacion}\n`;
+                    
+                    if (data.motor_pensando) {
+                        result += `🤖 Cfish está pensando...\n`;
+                        // Esperar y actualizar estado
+                        setTimeout(updateGameState, 3000);
+                    }
+                    
+                    if (data.juego_terminado) {
+                        result += `🏁 PARTIDA TERMINADA: ${data.resultado}\n`;
+                        document.getElementById('moveButton').disabled = true;
+                    }
+                    
+                    output.innerHTML = result;
+                    moveInput.value = '';
+                } else {
+                    output.innerHTML = `❌ Error: ${data.error}\n` +
+                                     `💡 Jugadas legales: ${data.jugadas_legales ? data.jugadas_legales.join(', ') : 'Consulta /api/jugadas-legales'}`;
+                }
+            } catch (error) {
+                output.innerHTML = `❌ Error: ${error.message}`;
+            }
+        }
+
+        async function updateGameState() {
+            if (!currentGameId) return;
+            
+            try {
+                const response = await fetch(`${baseUrl}/api/estado/${currentGameId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const output = document.getElementById('demoOutput');
+                    let currentText = output.innerHTML;
+                    
+                    if (data.juego_terminado) {
+                        currentText += `\n🏁 PARTIDA TERMINADA: ${data.resultado}`;
+                        document.getElementById('moveButton').disabled = true;
+                    } else if (!data.es_turno_humano) {
+                        currentText += `\n⏳ Cfish todavía está pensando...`;
+                        setTimeout(updateGameState, 2000);
+                    } else {
+                        currentText += `\n✅ Turno del jugador. Jugadas legales disponibles.`;
+                    }
+                    
+                    output.innerHTML = currentText;
+                }
+            } catch (error) {
+                console.error('Error updating game state:', error);
+            }
+        }
+
+        // Permitir Enter para jugar movimiento
+        document.getElementById('moveInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                makeMove();
+            }
+        });
+
+        // Verificar salud al cargar la página
+        window.addEventListener('load', checkHealth);
+    </script>
+</body>
+</html>
